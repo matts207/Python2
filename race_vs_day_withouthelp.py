@@ -34,5 +34,5 @@ b_percentage = tot_black_inmates/total_inmates * 100
 
 print("There are %s black inmates." % tot_black_inmates)
 print("There are %s white inmates." % tot_white_inmates)
-print("%.2f percent of inmates are black and only %.2f percent of inmates are white." % (b_percentage,w_percentage))
 print("Allegheny County's population is 84.33 percent white and only 12.41 percent black.")
+print("%.2f percent of inmates are black and only %.2f percent of inmates are white." % (b_percentage,w_percentage))
