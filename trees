@@ -1,0 +1,17 @@
+from os import walk
+
+root = 'OneDrive_2018-10-09/File Tree_Jeeps_stephanie_1327/Jeeps'
+
+tree_dict = {}
+
+
+for dir, sub, filelist in walk(root, topdown=False):
+    print('Directory: %s' % dir)
+    tree_dict[dir] = filelist
+    for fname in filelist:
+        print('\t%s' % fname)
+    print('\n')
+
+
+for item in tree_dict.items():
+    print(item)
