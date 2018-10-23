@@ -1,8 +1,6 @@
 # Python2
 CIT-129  Python 2 with Eric Darsow
 
-## Class1
+## API Project
 
-## Class2
-
-## Class3
+## Jail Census Project
