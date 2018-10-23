@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import tkinter as tk
-from tkinter import messagebox
+import tkinter.messagebox
 
 
 url = 'https://maps.googleapis.com/maps/api/directions/json?origin={o}&destination={d}&mode={m}&key=AIzaSyAYixVeTbunLmxgrk3TcVrUE9sWhGY64bI'
@@ -12,15 +12,29 @@ def run(url, origin, destination, travel_mode):
     url = url.replace('{o}', origin).replace('{d}', destination).replace('{m}', travel_mode)
     request = requests.get(url).json()
     directions = ''
-    arrival = format(datetime.now() + timedelta(seconds=request['routes'][0]['legs'][0]['duration']['value']), '%H:%M')
+    num_of_secs = request['routes'][0]['legs'][0]['duration']['value']
+    arrival = format(datetime.now() + timedelta(seconds=num_of_secs), '%H:%M')
+    # gets the time you would arrive at the destination
     directions += "If you leave now you will arrive at %s. \n\n" % arrival
+    # sets first line of output as the arrival time
     for step in request['routes'][0]['legs'][0]['steps']:
         soup = BeautifulSoup(step['html_instructions'], features="html.parser")
+        # gets the text from the html directions
         directions += soup.text + '\n' + format("%s.\n" % step['distance']['text'])
+        # adds each direction step to the output
     tk.messagebox.showinfo('Directions', directions)
+    # shows messagebox as output
 
 
-def gui():
+def empty_field_check(url, origin, destination, mode):  # makes sure info is properly inputted in GUI
+    if origin != '' and destination != '':
+        run(url,origin,destination,mode)
+        # calls run if origin and destination fields are not blank
+    else:
+        tkinter.messagebox.showerror('ERROR', 'Please enter a starting and ending location. ')
+
+
+def gui():  # makes GUI
     root = tk.Tk()
     root.wm_title('Directions')
     frame = tk.Frame(root)
@@ -40,7 +54,8 @@ def gui():
     mode_selection = tk.OptionMenu(root, selected_mode, 'Driving', 'Walking', 'Bicycling')
     mode_selection.configure(font='Times 16')
     mode_selection.pack(pady=10)
-    button = tk.Button(root, text='Get Directions', font='Times 18', command=lambda: run(url,origin.get(),destination.get(),selected_mode.get().lower()))
+    button = tk.Button(root, text='Get Directions', font='Times 18', command=lambda: empty_field_check(url, origin.get(), destination.get(), selected_mode.get().lower()))
+    # when button is pressed it calls empty_field_check to make sure that the locations are filled in
     button.pack(pady=10)
     root.mainloop()
 
