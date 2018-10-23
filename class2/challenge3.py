@@ -1,1 +1,0 @@
-print('askaliceithinkshe\'llknow'[::2])
