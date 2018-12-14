@@ -76,7 +76,7 @@ def set_addresses(json_file):
             hours = input("Enter the hour of the arrival time:\n")
             minutes = input("Enter the minutes of the arrival time\n")
             time = format("%s:%s" % (hours, minutes))
-        estimated_visit_time = int(input("In minutes, how long do you think this stop will take?")) * 60
+        estimated_visit_time = int(input("In minutes, how long do you think this stop will take?\n")) * 60
         address_list['addresses'][address] = [time, estimated_visit_time]
         another_address = input("Would you like to add another address?\nEnter Y/N:\n")
         while another_address.upper() != 'Y' and another_address.upper() != 'N':
@@ -87,12 +87,61 @@ def set_addresses(json_file):
         json.dump(address_list, f)
 
 
-def view_addresses():
+def view_addresses(json_file):
+    with open(json_file, 'r') as file:
+        addresses = json.load(file)
+        print("Your starting address is %s.\nAddress List:" % addresses['origin'])
+        for address, info in addresses['addresses'].items():
+            print("%s:\n\tSet Arrival Time: %s\n\tEstimated Job Time: %s" % (address, info[0], info[1]))
+
+
+def edit_addresses(json_file):
+    with open(json_file, 'r') as file:
+        addresses = json.load(file)
+    for address, info in addresses['addresses'].items():
+        print(address)
+        print("\tSet Time: %s\n\tEstimated Job Time: %s" % (info[0], info[1]))
+    address_to_change = input("Enter the address you'd like to change.")
+    while address_to_change not in addresses['addresses'].keys():
+        address_to_change = input("Address not found.  Try Again.  \nEnter the address you'd like to change.")
+    changes = address_formatting()
+    addresses['addresses'][changes] = addresses['addresses'].pop(address_to_change)
+    set_time_yn = input("Does this address have a set time?\nEnter Y/N:\n")
+    time = 'None'
+    while set_time_yn.upper() != 'Y' and set_time_yn.upper() != 'N':
+        set_time_yn = input("Try again.\nDoes this address have a set time?\nEnter Y or N:\n")
+    if set_time_yn.upper() == 'Y':
+        hours = input("Enter the hour of the arrival time:\n")
+        minutes = input("Enter the minutes of the arrival time\n")
+        time = format("%s:%s" % (hours, minutes))
+    estimated_visit_time = int(input("In minutes, how long do you think this stop will take?\n")) * 60
+    addresses['addresses'][changes] = [time, estimated_visit_time]
+    with open(json_file, 'w') as file:
+        json.dump(addresses, file)
+
+
+def clear_addresses(json_file):
     pass
 
 
-def routing(api, key, origin, waypoints):
-    new_url = api.replace('{O}', origin).replace('{D}', origin).replace("{W}", waypoints).replace("{K}", key)
+def get_origin(json_file):
+    with open(json_file, 'r') as file:
+        addresses = json.load(file)
+    return addresses['origin']
+
+def get_addresses(json_file):
+    with open(json_file,'r') as file:
+        addresses = json.load(file)
+    waypoints = ''
+    for key in addresses['addresses'].keys():
+        waypoints += key
+        waypoints += '|'
+    return waypoints
+
+
+def routing(api, key):
+    new_url = api.replace('{O}', get_origin(address_file)).replace('{D}', get_origin(address_file))
+    new_url = new_url.replace("{W}", get_addresses(address_file)).replace("{K}", key)
     request = requests.get(new_url).json()
 
     for leg in request['routes'][0]['legs']:
@@ -108,7 +157,11 @@ the destination (that for now is the same as the origin) and the addresses of th
 waypoints.  It assembles the correct url for the api call, requests it, and 
 prints out the step by step directions for each leg of the route.  '''
 
-# routing(google_directions_api_url, directions_key, o, waypoints)
 
-check_origin(address_file)
+view_addresses(address_file)
 set_addresses(address_file)
+
+routing(google_directions_api_url, directions_key)
+# clear_addresses(address_file)
+# edit_addresses(address_file)
+# check_origin(address_file)
