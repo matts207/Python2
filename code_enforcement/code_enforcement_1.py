@@ -1,8 +1,8 @@
-import requests, json
+import requests
+import json
 from bs4 import BeautifulSoup
 
-
-google_directions_api_url = 'https://maps.googleapis.com/maps/api/directions/json?origin={O}&destination={D}&waypoints=optimize:true|{W}&key={K}'
+google_directions_api_url = 'https://maps.googleapis.com/maps/api/directions/json?origin={}&destination={}&waypoints=optimize:true{}&key={}'
 
 directions_key = 'AIzaSyAYixVeTbunLmxgrk3TcVrUE9sWhGY64bI'
 
@@ -15,18 +15,19 @@ def address_formatting():
     city = input("Enter the city:\n")
     state = input("Enter the 2-letter state abbreviation:\n")
     zipcode = input("Enter the 5 number zip-code:\n")
-    return format("%s %s %s, %s, %s" % (number, st_name, city, state, zipcode))
+    return f"{number} {st_name} {city}, {state}, {zipcode}"
 
 
 def check_origin(json_file):
     with open(json_file, 'r') as file:
         address_list = json.load(file)
     print(address_list)
-    answer = input("Is %s your starting address?\nY/N:" % address_list['origin'])
+    answer = input(f"Is {address_list['origin']} your starting address?\nEnter Y or N:")
     while answer.upper() != 'Y' and answer.upper() != 'N':
-        answer = input("Try again.\nIs %s your starting address?\nEnter Y or N:" % address_list['origin'])
+        answer = input(f"Try again.\nIs {address_list['origin']} your starting address?\nEnter Y or N:")
     if answer.upper() == 'N':
         address_list['origin'] = address_formatting()
+        print(address_list)
     with open(json_file, 'w') as f:
         json.dump(address_list, f)
 
@@ -34,10 +35,11 @@ def check_origin(json_file):
 def set_addresses(json_file):
     with open(json_file, 'r') as file:
         address_list = json.load(file)
+    address_list['addresses'] = {}
     loop_bool = True
+    print("Enter your addresses:")
     while loop_bool:
         time = "None"
-        print("Enter your addresses:")
         address = address_formatting()
         set_time_yn = input("Does this address have a set time?\nEnter Y/N:\n")
         while set_time_yn.upper() != 'Y' and set_time_yn.upper() != 'N':
@@ -60,9 +62,9 @@ def set_addresses(json_file):
 def view_addresses(json_file):
     with open(json_file, 'r') as file:
         addresses = json.load(file)
-        print("Your starting address is %s.\nAddress List:" % addresses['origin'])
+        print(f"Your starting address is {addresses['origin']}.\nAddress List:")
         for address, info in addresses['addresses'].items():
-            print("%s:\n\tSet Arrival Time: %s\n\tEstimated Job Time: %s" % (address, info[0], info[1]))
+            print(f"{address}:\n\tSet Arrival Time: {info[0]}\n\tEstimated Job Time: {info[1]}")
 
 
 def edit_addresses(json_file):
@@ -70,7 +72,7 @@ def edit_addresses(json_file):
         addresses = json.load(file)
     for address, info in addresses['addresses'].items():
         print(address)
-        print("\tSet Time: %s\n\tEstimated Job Time: %s" % (info[0], info[1]))
+        print(f"\tSet Time: {info[0]}\n\tEstimated Job Time: {info[1]}")
     address_to_change = input("Enter the address you'd like to change.")
     while address_to_change not in addresses['addresses'].keys():
         address_to_change = input("Address not found.  Try Again.  \nEnter the address you'd like to change.")
@@ -91,7 +93,11 @@ def edit_addresses(json_file):
 
 
 def clear_addresses(json_file):
-    pass
+    with open(json_file, 'r') as file:
+        address_list = json.load(file)
+    address_list['addresses'] = {}
+    with open(json_file, 'w') as file:
+        json.dump(address_list, file)
 
 
 def get_origin(json_file):
@@ -99,39 +105,40 @@ def get_origin(json_file):
         addresses = json.load(file)
     return addresses['origin']
 
+
 def get_addresses(json_file):
-    with open(json_file,'r') as file:
+    with open(json_file, 'r') as file:
         addresses = json.load(file)
     waypoints = ''
     for key in addresses['addresses'].keys():
-        waypoints += key
         waypoints += '|'
+        waypoints += key
     return waypoints
 
 
 def routing(api, key):
-    new_url = api.replace('{O}', get_origin(address_file)).replace('{D}', get_origin(address_file))
-    new_url = new_url.replace("{W}", get_addresses(address_file)).replace("{K}", key)
-    request = requests.get(new_url).json()
+    """The arguments are the api url and the api key.
+    This calls the get_origin and the get_address functions,
+    formats the api url, calls the api, and outputs the step-by-step
+    directions to each destination on the route in the new optimized order."""
 
-    for leg in request['routes'][0]['legs']:
-        for step in leg['steps']:
-            soup = BeautifulSoup(step['html_instructions'], features="html.parser")
-            print(soup.text + '\n' + format("%s.\n" % step['distance']['text']))
-            # Makes the html directions readable
-        print('\n\n')
-    print('New Waypoint Order %s\n\n' % request['routes'][0]['waypoint_order'])
-    # pp.pprint(request)
-'''routing function takes in the api url, the api key, the desired origin,
-the destination (that for now is the same as the origin) and the addresses of the 
-waypoints.  It assembles the correct url for the api call, requests it, and 
-prints out the step by step directions for each leg of the route.  '''
+    origin = get_origin(address_file)
+    waypoints = get_addresses(address_file)
+    try:
+        request = requests.get(api.format(origin, origin, waypoints, key)).json()
 
+        for leg in request['routes'][0]['legs']:
+            print("\n")
+            for step in leg['steps']:
+                soup = BeautifulSoup(step['html_instructions'], features="html.parser")
+                print(soup.text + '\n' + f"{step['distance']['text']}\n")
+                # Makes the html directions readable
+        print(f"\nOptimized Route Order: {request['routes'][0]['waypoint_order']}")
+    except:
+        print("Error.  Please check connection.")
 
+# check_origin(address_file)
+# set_addresses(address_file)
 view_addresses(address_file)
-set_addresses(address_file)
-
 routing(google_directions_api_url, directions_key)
 # clear_addresses(address_file)
-# edit_addresses(address_file)
-# check_origin(address_file)
