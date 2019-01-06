@@ -24,7 +24,7 @@ def address_formatting():
     city = input("Enter the city:\n")
     state = input("Enter the 2-letter state abbreviation:\n")
     zipcode = input("Enter the 5 number zip-code:\n")
-    return f"{number} {st_name} {city}, {state} {zipcode}"
+    return format("{number} {st_name} {city}, {state} {zipcode}")
 
 
 def check_origin(json_file):
@@ -35,9 +35,9 @@ def check_origin(json_file):
 
     with open(json_file, 'r') as file:
         address_list = json.load(file)
-    answer = input(f"Is your starting address {address_list['origin']}?\nEnter Y or N:\n").upper()
+    answer = input(format("Is your starting address {address_list['origin']}?\nEnter Y or N:\n")).upper()
     while answer != 'Y' and answer != 'N':
-        answer = input(f"Try again.\nIs {address_list['origin']} your starting address?\nEnter Y or N:\n").upper()
+        answer = input(format("Try again.\nIs {address_list['origin']} your starting address?\nEnter Y or N:\n")).upper()
     if answer == 'N':
         address_list['origin'] = address_formatting()
     with open(json_file, 'w') as file:
@@ -119,9 +119,9 @@ def view_addresses(json_file):
     # Displays the list of addresses
     with open(json_file, 'r') as file:
         addresses = json.load(file)
-        print(f"Your starting address is {addresses['origin']}.\nAddress List:")
+        print(format("Your starting address is {addresses['origin']}.\nAddress List:"))
         for address, info in addresses['addresses'].items():
-            print(f"{address}:\n\tSet Arrival Time: {info[0]}\n\tEstimated Job Time: {info[1]}")
+            print(format("{address}:\n\tSet Arrival Time: {info[0]}\n\tEstimated Job Time: {info[1]}"))
 
 
 def edit_addresses(json_file):
@@ -130,7 +130,7 @@ def edit_addresses(json_file):
         addresses = json.load(file)
     for address, info in addresses['addresses'].items():
         print(address)
-        print(f"\tSet Time: {info[0]}\n\tEstimated Job Time: {info[1]}")
+        print(format("\tSet Time: {info[0]}\n\tEstimated Job Time: {info[1]}"))
     address_to_change = input("Enter the address you'd like to change.\n")
     while address_to_change not in addresses['addresses'].keys():
         address_to_change = input("Address not found.  Try Again.  \nEnter the address you'd like to change.")
@@ -197,7 +197,7 @@ def routing(api, key, origin, destination, waypoints):
                 for step in leg['steps']:
                     output += step['html_instructions']
                     # Makes the html directions readable
-            print(f"\nOptimized Route Order: {request['routes'][0]['waypoint_order']}")
+            print(format("\nOptimized Route Order: {request['routes'][0]['waypoint_order']}"))
         except:
             print("Error.  Please check connection.")
         # Exception handling is to prevent issues in case of no internet connection.
@@ -209,7 +209,7 @@ def routing(api, key, origin, destination, waypoints):
                 print("\n")
                 for step in leg['steps']:
                     output += step['html_instructions']
-            print(f"\nOptimized Route Order: {request['routes'][0]['waypoint_order']}")
+            print(format("\nOptimized Route Order: {request['routes'][0]['waypoint_order']}"))
         except:
             print("Error.  Please check connection.")
     return output
@@ -377,4 +377,3 @@ def setting_route(api, key, json_file):
 #edit_addresses(route_data)
 #view_addresses(route_data)
 #setting_route(google_directions_api_url, directions_key, route_data)
-
