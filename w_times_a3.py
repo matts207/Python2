@@ -241,7 +241,7 @@ def one_set_time(api, key, points_with_times, points_without_times, origin):
             combos += combinations(points_without_times, num_in_combos)'''
         for num_in_combos in range(1, len(points_without_times)):
             for com in combinations(points_without_times, num_in_combos):
-                d = {x:points_without_times[x] for x in com}
+                d = {x:[points_without_times[x], num_in_combos] for x in com}
                 combos.append(d)
         combos = combos[::-1]
         pp.pprint(combos)
@@ -251,15 +251,21 @@ def one_set_time(api, key, points_with_times, points_without_times, origin):
             wp = '|'.join('{}'.format(waypoint) for waypoint in combo.keys())
             wp_time = 0
             for com in combo.values():
-                wp_time += com[1]
+                wp_time += com[0][1]
+            if best_choice:
+                #####################################################
+                #   start working here   #
+                if len(best_choice[0]) > com[0][1]:
+                    break
+                    print("broke")
             r = requests.get(api.format(origin, set_time_address, wp, key)).json()
             for leg in r['routes'][0]['legs']:
                 wp_time += leg['duration']['value']
             if wp_time < time_left:
                 if not best_choice:
-                    best_choice = [list(combo.keys()), wp_time]
+                    best_choice = [list(combo.keys()), wp_time, num_in_combos]
                 elif best_choice[1] < wp_time and len(combo) >= len(best_choice[0]):
-                    best_choice = [list(combo.keys()), wp_time]
+                    best_choice = [list(combo.keys()), wp_time, num_in_combos]
         print(best_choice)
         if not best_choice:
             wp = '|'.join('{}'.format(waypoint) for waypoint in points_without_times.keys())
@@ -377,7 +383,7 @@ def setting_route(api, key, json_file):
 
 # check_origin(route_data)
 # set_addresses(route_data)
-#edit_addresses(route_data)
+# edit_addresses(route_data)
 view_addresses(route_data)
 setting_route(google_directions_api_url, directions_key, route_data)
 
